@@ -3,53 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PUBG Intelligence Hub | PRO</title>
+    <title>PUBG Intelligence Hub | AI Pro</title>
     <style>
         :root { --bg: #0f172a; --panel: #1e293b; --accent: #22d3ee; --text: #f8fafc; --danger: #ef4444; --success: #4ade80; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; height: 100vh; overflow: hidden; }
-        
-        /* Sidebar Nav */
         nav { width: 70px; background: #020617; display: flex; flex-direction: column; align-items: center; padding: 20px 0; gap: 20px; border-left: 1px solid var(--panel); }
         .nav-icon { width: 45px; height: 45px; cursor: pointer; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: var(--panel); border: none; color: white; transition: 0.3s; font-size: 1.2rem; }
         .nav-icon.active { background: var(--accent); color: #000; box-shadow: 0 0 15px var(--accent); }
-
-        /* AI Side Panel */
         #ai-panel { width: 350px; background: var(--panel); border-right: 1px solid #334155; display: flex; flex-direction: column; }
         .chat-header { padding: 15px; background: rgba(34,211,238,0.1); border-bottom: 1px solid var(--accent); }
         .chat-box { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-        .msg { padding: 10px; border-radius: 8px; font-size: 0.9rem; max-width: 85%; line-height: 1.4; }
+        .msg { padding: 10px; border-radius: 8px; font-size: 0.9rem; max-width: 85%; line-height: 1.4; white-space: pre-wrap; }
         .msg.ai { background: #334155; border-right: 3px solid var(--accent); align-self: flex-start; }
         .msg.user { background: var(--accent); color: #000; align-self: flex-end; }
         .chat-input { padding: 15px; background: #020617; display: flex; gap: 8px; }
-        #aiInput { flex: 1; background: #1e293b; border: 1px solid #334155; color: white; padding: 10px; border-radius: 8px; }
-
-        /* Main Content */
+        #aiInput { flex: 1; background: #1e293b; border: 1px solid #334155; color: white; padding: 10px; border-radius: 8px; outline: none; }
         main { flex: 1; padding: 25px; overflow-y: auto; }
         .page { display: none; }
         .page.active { display: block; animation: fadeIn 0.3s; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        
         .card { background: #1e293b; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); border: 1px solid #334155; }
         input, textarea { background: #020617; border: 1px solid #334155; color: #fff; padding: 10px; border-radius: 6px; width: 100%; margin: 5px 0; box-sizing: border-box; }
         .btn-main { background: var(--accent); color: #000; font-weight: bold; padding: 12px; border-radius: 8px; width: 100%; cursor: pointer; border: none; }
-        
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { text-align: right; padding: 12px; border-bottom: 1px solid #334155; }
         .player-tag { display: inline-block; padding: 2px 6px; border-radius: 4px; margin: 2px; font-size: 0.8rem; border: 1px solid var(--success); color: var(--success); }
         .standin { border-color: var(--danger); color: var(--danger); }
-        #log { background: #000; padding: 10px; border-radius: 6px; font-family: monospace; font-size: 0.85rem; height: 150px; overflow-y: auto; color: #94a3b8; }
+        #log { background: #000; padding: 10px; border-radius: 6px; font-family: monospace; font-size: 0.85rem; height: 120px; overflow-y: auto; color: #94a3b8; }
+        .typing { font-size: 0.8rem; color: var(--accent); margin-bottom: 5px; display: none; }
     </style>
 </head>
 <body>
 
     <aside id="ai-panel">
-        <div class="chat-header"><h4>🤖 مساعد Gemini الذكي</h4></div>
+        <div class="chat-header"><h4>🤖 Gemini Intelligence PRO</h4></div>
         <div class="chat-box" id="chatBox">
-            <div class="msg ai">أهلاً بك! أنا مستعد لتحليل بيانات الـ 72 ماتش. ارفع الماتشات واسألني عن أي تفاصيل.</div>
+            <div class="msg ai">أهلاً بك يا بطل! أنا الآن مربوط بمخ Gemini.
+                أنا أعرف أنك عملت على **72 ماتش** وأستطيع تحليل أداء أي فريق أو لاعب من الداتا الخاصة بك. اسألني أي شيء!</div>
         </div>
+        <div id="typingIndicator" class="typing" style="padding-right: 15px;">Gemini يفكر...</div>
         <div class="chat-input">
-            <input type="text" id="aiInput" placeholder="اسألني أي شيء..." onkeypress="if(event.key === 'Enter') askAI()">
-            <button onclick="askAI()" style="background:var(--accent); border:none; padding:10px; border-radius:5px; cursor:pointer;">➔</button>
+            <input type="text" id="aiInput" placeholder="اسأل المساعد الذكي..." onkeypress="if(event.key === 'Enter') askGemini()">
+            <button onclick="askGemini()" style="background:var(--accent); border:none; padding:10px 15px; border-radius:8px; cursor:pointer;">➔</button>
         </div>
     </aside>
 
@@ -65,9 +60,9 @@
             <div class="card">
                 <h3>إدخال الماتشات (Sync)</h3>
                 <input type="date" id="mDate">
-                <textarea id="mIds" rows="5" placeholder="Match IDs هنا (كل واحد في سطر)"></textarea>
-                <button class="btn-main" onclick="syncMatches()">بدء المزامنة والتحليل</button>
-                <div id="log" style="margin-top:15px;">Log: Ready...</div>
+                <textarea id="mIds" rows="5" placeholder="Match IDs هنا (ID واحد في كل سطر)"></textarea>
+                <button class="btn-main" onclick="syncMatches()">بدء المزامنة الذكية</button>
+                <div id="log" style="margin-top:15px;">Log: Ready for action...</div>
             </div>
         </div>
 
@@ -84,7 +79,7 @@
                 <button class="btn-main" onclick="saveTeam()" style="margin-top:10px; background:var(--success)">حفظ الفريق</button>
             </div>
             <div class="card">
-                <h3>الفرق المسجلة</h3>
+                <h3>قائمة الفرق المسجلة</h3>
                 <table id="teamsTable">
                     <thead><tr><th>الفريق</th><th>الأساسيين</th><th>حذف</th></tr></thead>
                     <tbody id="teamsBody"></tbody>
@@ -95,10 +90,10 @@
         <!-- التقارير والبحث -->
         <div id="stats-view" class="page">
             <div class="card">
-                <h3>🔍 بحث في التقارير</h3>
-                <input type="text" id="teamSearch" placeholder="ابحث عن فريق..." onkeyup="filterTeams()" style="border: 1px solid var(--accent);">
+                <h3>🔍 محرك بحث التقارير</h3>
+                <input type="text" id="teamSearch" placeholder="ابحث عن فريق محدد..." onkeyup="filterTeams()" style="border: 1px solid var(--accent);">
                 <table>
-                    <thead><tr><th>الفريق</th><th>الماتشات</th><th>الإجراء</th></tr></thead>
+                    <thead><tr><th>الفريق</th><th>عدد الماتشات</th><th>الإجراء</th></tr></thead>
                     <tbody id="statsSummaryBody"></tbody>
                 </table>
             </div>
@@ -113,16 +108,65 @@
     </main>
 
 <script>
-    const API_KEY = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJqdGkiOiIwYWJhOWMzMC05ZTBlLTAxM2UtM2NhNS0yNmQxYTJiMzY4ZGYiLCJpc3MiOiJnYW1lbG9ja2VyIiwiaWF0IjoxNzYyNTIzMTcwLCJwdWIiOiJibHVlaG9sZSIsInRpdGxlIjoicHViZyIsImFwcCI6Ii02ZmI4NWQyOC03OTdmLTQ0MmEtOTkzNi05NTM0YjhhNTc4ZmMifQ.WOgPFCq3kIuRbh80y4bf1xopO7xqcn1h1pQsuszo0nU";
+    // --- إعدادات الـ API ---
+    const GEMINI_API_KEY = "AIzaSyBIWL4qRGlOq02HeDllImFDtQaWL9V21YM";
+    const PUBG_API_KEY = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJqdGkiOiIwYWJhOWMzMC05ZTBlLTAxM2UtM2NhNS0yNmQxYTJiMzY4ZGYiLCJpc3MiOiJnYW1lbG9ja2VyIiwiaWF0IjoxNzYyNTIzMTcwLCJwdWIiOiJibHVlaG9sZSIsInRpdGxlIjoicHViZyIsImFwcCI6Ii02ZmI4NWQyOC03OTdmLTQ0MmEtOTkzNi05NTM0YjhhNTc4ZmMifQ.WOgPFCq3kIuRbh80y4bf1xopO7xqcn1h1pQsuszo0nU";
+    
     let db;
-
-    const request = indexedDB.open("PUBG_Pro_DB_Final", 1);
+    const request = indexedDB.open("PUBG_AI_Database_V6", 1);
     request.onupgradeneeded = e => {
         db = e.target.result;
         db.createObjectStore("teams", { keyPath: "id", autoIncrement: true });
     };
     request.onsuccess = e => { db = e.target.result; renderTeams(); };
 
+    // --- وظيفة الـ AI الحقيقي ---
+    async function askGemini() {
+        const input = document.getElementById('aiInput');
+        const box = document.getElementById('chatBox');
+        const typing = document.getElementById('typingIndicator');
+        const userText = input.value.trim();
+        if(!userText) return;
+
+        box.innerHTML += `<div class="msg user">${userText}</div>`;
+        input.value = "";
+        typing.style.display = "block";
+        box.scrollTop = box.scrollHeight;
+
+        // جلب البيانات من الداتا بيز لإرسالها لـ Gemini كـ Context
+        const allData = await new Promise(r => {
+            db.transaction("teams").objectStore("teams").getAll().onsuccess = e => r(e.target.result);
+        });
+
+        // تجهيز ملخص البيانات لـ Gemini
+        const dataSummary = allData.map(t => ({
+            team: t.name,
+            matches: t.history.length,
+            avgRank: t.history.reduce((a,h)=>a+h.rank,0)/t.history.length || 0,
+            roster: t.roster
+        }));
+
+        try {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: `أنت مساعد خبير في PUBG وتحليل السكريمات. إليك بيانات الفرق الحالية: ${JSON.stringify(dataSummary)}. المستخدم يسألك: ${userText}` }] }]
+                })
+            });
+
+            const result = await response.json();
+            const aiReply = result.candidates[0].content.parts[0].text;
+            box.innerHTML += `<div class="msg ai">${aiReply}</div>`;
+        } catch (err) {
+            box.innerHTML += `<div class="msg ai">حدث خطأ في الاتصال بـ Gemini. تأكد من صحة الـ API Key.</div>`;
+        } finally {
+            typing.style.display = "none";
+            box.scrollTop = box.scrollHeight;
+        }
+    }
+
+    // --- باقي وظائف السيستم (Sync, Teams, Search) ---
     function showPage(id, btn) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.nav-icon').forEach(i => i.classList.remove('active'));
@@ -139,8 +183,7 @@
             history: []
         };
         const tx = db.transaction("teams", "readwrite");
-        tx.objectStore("teams").add(team);
-        tx.oncomplete = () => { renderTeams(); alert("تم الحفظ"); };
+        tx.objectStore("teams").add(team).onsuccess = () => { renderTeams(); alert("تم الحفظ بنجاح!"); };
     }
 
     function renderTeams() {
@@ -148,7 +191,7 @@
         db.transaction("teams").objectStore("teams").openCursor().onsuccess = e => {
             const cursor = e.target.result;
             if(cursor) {
-                tbody.innerHTML += `<tr><td>${cursor.value.name}</td><td>${cursor.value.roster.join(' | ')}</td><td><button onclick="deleteTeam(${cursor.value.id})">❌</button></td></tr>`;
+                tbody.innerHTML += `<tr><td><b>${cursor.value.name}</b></td><td>${cursor.value.roster.join(' | ')}</td><td><button onclick="deleteTeam(${cursor.value.id})" style="background:none; border:none; cursor:pointer;">❌</button></td></tr>`;
                 cursor.continue();
             }
         };
@@ -158,23 +201,25 @@
         const ids = document.getElementById('mIds').value.trim().split('\n');
         const mDate = document.getElementById('mDate').value;
         const log = document.getElementById('log');
-        if(!mDate || !ids[0]) return alert("بيانات ناقصة");
+        if(!mDate || !ids[0]) return alert("يرجى إدخال التاريخ والـ IDs");
 
+        log.innerHTML = "⏳ جاري فحص الـ API والمزامنة...";
         const allTeams = await new Promise(r => {
             db.transaction("teams").objectStore("teams").getAll().onsuccess = e => r(e.target.result);
         });
 
-        for (let id of ids) {
+        for (let mId of ids) {
+            let id = mId.trim(); if(!id) continue;
             try {
-                const res = await fetch(`https://api.pubg.com/shards/steam/matches/${id.trim()}`, {
-                    headers: { "Authorization": `Bearer ${API_KEY}`, "Accept": "application/vnd.api+json" }
+                const res = await fetch(`https://api.pubg.com/shards/steam/matches/${id}`, {
+                    headers: { "Authorization": `Bearer ${PUBG_API_KEY}`, "Accept": "application/vnd.api+json" }
                 });
                 const data = await res.json();
                 const participants = data.included.filter(i => i.type === "participant");
                 const rosters = data.included.filter(i => i.type === "roster");
 
                 for (let team of allTeams) {
-                    const foundP = participants.find(p => team.roster.some(r => r.toLowerCase() === p.attributes.stats.name.toLowerCase()));
+                    const foundP = participants.find(p => team.roster.some(r => r && r.toLowerCase() === p.attributes.stats.name.toLowerCase()));
                     if(foundP) {
                         const myRoster = rosters.find(r => r.relationships.participants.data.some(p => p.id === foundP.id));
                         const squadIds = myRoster.relationships.participants.data.map(p => p.id);
@@ -184,18 +229,17 @@
                             team.history.push({
                                 date: mDate, matchId: id, rank: myRoster.attributes.stats.rank,
                                 kills: fullSquad.reduce((s, p) => s + p.attributes.stats.kills, 0),
-                                squad: fullSquad.map(p => ({ name: p.attributes.stats.name, isCore: team.roster.some(r => r.toLowerCase() === p.attributes.stats.name.toLowerCase()) }))
+                                squad: fullSquad.map(p => ({ name: p.attributes.stats.name, isCore: team.roster.some(r => r && r.toLowerCase() === p.attributes.stats.name.toLowerCase()) }))
                             });
-                            await new Promise(r => {
-                                const tx = db.transaction("teams", "readwrite");
-                                tx.objectStore("teams").put(team).onsuccess = () => r();
-                            });
-                            log.innerHTML += `\n✅ تم تحليل: ${team.name}`;
+                            const tx = db.transaction("teams", "readwrite");
+                            tx.objectStore("teams").put(team);
+                            log.innerHTML += `\n✅ تم سحب ماتش للفريق: ${team.name}`;
                         }
                     }
                 }
-            } catch (e) { log.innerHTML += `\n❌ خطأ: ${id}`; }
+            } catch (e) { log.innerHTML += `\n❌ خطأ في الماتش: ${id}`; }
         }
+        log.innerHTML += "\n--- تم الانتهاء ---";
     }
 
     function renderStatsSummary() {
@@ -203,7 +247,8 @@
         db.transaction("teams").objectStore("teams").openCursor().onsuccess = e => {
             const cursor = e.target.result;
             if(cursor) {
-                tbody.innerHTML += `<tr><td>${cursor.value.name}</td><td>${cursor.value.history.length}</td><td><button onclick="viewPerf(${cursor.value.id})">عرض</button></td></tr>`;
+                const t = cursor.value;
+                tbody.innerHTML += `<tr><td>${t.name}</td><td>${t.history.length}</td><td><button class="btn-main" onclick="viewPerf(${t.id})" style="padding:5px;">عرض</button></td></tr>`;
                 cursor.continue();
             }
         };
@@ -218,22 +263,11 @@
         db.transaction("teams").objectStore("teams").get(id).onsuccess = e => {
             const t = e.target.result;
             document.getElementById('performance-card').style.display = "block";
-            document.getElementById('perfTitle').innerText = `سكواد: ${t.name}`;
+            document.getElementById('perfTitle').innerText = `تحليل سكواد: ${t.name}`;
             document.getElementById('detailsBody').innerHTML = t.history.map(h => `
-                <tr><td>${h.date}</td><td>#${h.rank}</td><td>${h.kills}</td><td>${h.squad.map(p => `<span class="player-tag ${p.isCore ? '' : 'standin'}">${p.name}</span>`).join('')}</td></tr>
+                <tr><td>${h.date}</td><td style="color:var(--accent)">#${h.rank}</td><td>${h.kills}</td><td>${h.squad.map(p => `<span class="player-tag ${p.isCore ? '' : 'standin'}">${p.name}</span>`).join('')}</td></tr>
             `).join('');
         };
-    }
-
-    function askAI() {
-        const input = document.getElementById('aiInput');
-        const box = document.getElementById('chatBox');
-        box.innerHTML += `<div class="msg user">${input.value}</div>`;
-        setTimeout(() => {
-            box.innerHTML += `<div class="msg ai">أنا هنا ومتابعك! المشروع دلوقت جاهز للرفع. بمجرد ما نرفعه، هقدر أربط لك ذكاء Gemini الحقيقي بالداتا دي.</div>`;
-            box.scrollTop = box.scrollHeight;
-        }, 600);
-        input.value = "";
     }
 </script>
 </body>
