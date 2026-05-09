@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PUBG Intelligence Hub | PRO</title>
+    <style>
+        :root { --bg: #0f172a; --panel: #1e293b; --accent: #22d3ee; --text: #f8fafc; --danger: #ef4444; --success: #4ade80; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        
+        /* Sidebar Nav */
+        nav { width: 70px; background: #020617; display: flex; flex-direction: column; align-items: center; padding: 20px 0; gap: 20px; border-left: 1px solid var(--panel); }
+        .nav-icon { width: 45px; height: 45px; cursor: pointer; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: var(--panel); border: none; color: white; transition: 0.3s; font-size: 1.2rem; }
+        .nav-icon.active { background: var(--accent); color: #000; box-shadow: 0 0 15px var(--accent); }
+
+        /* AI Side Panel */
+        #ai-panel { width: 350px; background: var(--panel); border-right: 1px solid #334155; display: flex; flex-direction: column; }
+        .chat-header { padding: 15px; background: rgba(34,211,238,0.1); border-bottom: 1px solid var(--accent); }
+        .chat-box { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .msg { padding: 10px; border-radius: 8px; font-size: 0.9rem; max-width: 85%; line-height: 1.4; }
+        .msg.ai { background: #334155; border-right: 3px solid var(--accent); align-self: flex-start; }
+        .msg.user { background: var(--accent); color: #000; align-self: flex-end; }
+        .chat-input { padding: 15px; background: #020617; display: flex; gap: 8px; }
+        #aiInput { flex: 1; background: #1e293b; border: 1px solid #334155; color: white; padding: 10px; border-radius: 8px; }
+
+        /* Main Content */
+        main { flex: 1; padding: 25px; overflow-y: auto; }
+        .page { display: none; }
+        .page.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        .card { background: #1e293b; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); border: 1px solid #334155; }
+        input, textarea { background: #020617; border: 1px solid #334155; color: #fff; padding: 10px; border-radius: 6px; width: 100%; margin: 5px 0; box-sizing: border-box; }
+        .btn-main { background: var(--accent); color: #000; font-weight: bold; padding: 12px; border-radius: 8px; width: 100%; cursor: pointer; border: none; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { text-align: right; padding: 12px; border-bottom: 1px solid #334155; }
+        .player-tag { display: inline-block; padding: 2px 6px; border-radius: 4px; margin: 2px; font-size: 0.8rem; border: 1px solid var(--success); color: var(--success); }
+        .standin { border-color: var(--danger); color: var(--danger); }
+        #log { background: #000; padding: 10px; border-radius: 6px; font-family: monospace; font-size: 0.85rem; height: 150px; overflow-y: auto; color: #94a3b8; }
+    </style>
+</head>
+<body>
+
+    <aside id="ai-panel">
+        <div class="chat-header"><h4>🤖 مساعد Gemini الذكي</h4></div>
+        <div class="chat-box" id="chatBox">
+            <div class="msg ai">أهلاً بك! أنا مستعد لتحليل بيانات الـ 72 ماتش. ارفع الماتشات واسألني عن أي تفاصيل.</div>
+        </div>
+        <div class="chat-input">
+            <input type="text" id="aiInput" placeholder="اسألني أي شيء..." onkeypress="if(event.key === 'Enter') askAI()">
+            <button onclick="askAI()" style="background:var(--accent); border:none; padding:10px; border-radius:5px; cursor:pointer;">➔</button>
+        </div>
+    </aside>
+
+    <nav>
+        <button class="nav-icon active" onclick="showPage('match-entry', this)">📝</button>
+        <button class="nav-icon" onclick="showPage('teams-list', this)">👥</button>
+        <button class="nav-icon" onclick="showPage('stats-view', this)">📊</button>
+    </nav>
+
+    <main>
+        <!-- إدخال الماتشات -->
+        <div id="match-entry" class="page active">
+            <div class="card">
+                <h3>إدخال الماتشات (Sync)</h3>
+                <input type="date" id="mDate">
+                <textarea id="mIds" rows="5" placeholder="Match IDs هنا (كل واحد في سطر)"></textarea>
+                <button class="btn-main" onclick="syncMatches()">بدء المزامنة والتحليل</button>
+                <div id="log" style="margin-top:15px;">Log: Ready...</div>
+            </div>
+        </div>
+
+        <!-- إدارة الفرق -->
+        <div id="teams-list" class="page">
+            <div class="card">
+                <h3>تسجيل فريق جديد</h3>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                    <input type="text" id="tName" placeholder="اسم الفريق">
+                    <input type="text" id="tTier" placeholder="Tier">
+                    <input type="text" id="p1" placeholder="لاعب 1"><input type="text" id="p2" placeholder="لاعب 2">
+                    <input type="text" id="p3" placeholder="لاعب 3"><input type="text" id="p4" placeholder="لاعب 4">
+                </div>
+                <button class="btn-main" onclick="saveTeam()" style="margin-top:10px; background:var(--success)">حفظ الفريق</button>
+            </div>
+            <div class="card">
+                <h3>الفرق المسجلة</h3>
+                <table id="teamsTable">
+                    <thead><tr><th>الفريق</th><th>الأساسيين</th><th>حذف</th></tr></thead>
+                    <tbody id="teamsBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- التقارير والبحث -->
+        <div id="stats-view" class="page">
+            <div class="card">
+                <h3>🔍 بحث في التقارير</h3>
+                <input type="text" id="teamSearch" placeholder="ابحث عن فريق..." onkeyup="filterTeams()" style="border: 1px solid var(--accent);">
+                <table>
+                    <thead><tr><th>الفريق</th><th>الماتشات</th><th>الإجراء</th></tr></thead>
+                    <tbody id="statsSummaryBody"></tbody>
+                </table>
+            </div>
+            <div id="performance-card" class="card" style="display:none">
+                <h3 id="perfTitle" style="color:var(--accent)"></h3>
+                <table id="detailsTable">
+                    <thead><tr><th>التاريخ</th><th>المركز</th><th>Kills</th><th>التشكيلة</th></tr></thead>
+                    <tbody id="detailsBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+<script>
+    const API_KEY = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJqdGkiOiIwYWJhOWMzMC05ZTBlLTAxM2UtM2NhNS0yNmQxYTJiMzY4ZGYiLCJpc3MiOiJnYW1lbG9ja2VyIiwiaWF0IjoxNzYyNTIzMTcwLCJwdWIiOiJibHVlaG9sZSIsInRpdGxlIjoicHViZyIsImFwcCI6Ii02ZmI4NWQyOC03OTdmLTQ0MmEtOTkzNi05NTM0YjhhNTc4ZmMifQ.WOgPFCq3kIuRbh80y4bf1xopO7xqcn1h1pQsuszo0nU";
+    let db;
+
+    const request = indexedDB.open("PUBG_Pro_DB_Final", 1);
+    request.onupgradeneeded = e => {
+        db = e.target.result;
+        db.createObjectStore("teams", { keyPath: "id", autoIncrement: true });
+    };
+    request.onsuccess = e => { db = e.target.result; renderTeams(); };
+
+    function showPage(id, btn) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-icon').forEach(i => i.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        btn.classList.add('active');
+        if(id === 'teams-list') renderTeams();
+        if(id === 'stats-view') renderStatsSummary();
+    }
+
+    function saveTeam() {
+        const team = {
+            name: document.getElementById('tName').value,
+            roster: [document.getElementById('p1').value.trim(), document.getElementById('p2').value.trim(), document.getElementById('p3').value.trim(), document.getElementById('p4').value.trim()],
+            history: []
+        };
+        const tx = db.transaction("teams", "readwrite");
+        tx.objectStore("teams").add(team);
+        tx.oncomplete = () => { renderTeams(); alert("تم الحفظ"); };
+    }
+
+    function renderTeams() {
+        const tbody = document.getElementById('teamsBody'); tbody.innerHTML = "";
+        db.transaction("teams").objectStore("teams").openCursor().onsuccess = e => {
+            const cursor = e.target.result;
+            if(cursor) {
+                tbody.innerHTML += `<tr><td>${cursor.value.name}</td><td>${cursor.value.roster.join(' | ')}</td><td><button onclick="deleteTeam(${cursor.value.id})">❌</button></td></tr>`;
+                cursor.continue();
+            }
+        };
+    }
+
+    async function syncMatches() {
+        const ids = document.getElementById('mIds').value.trim().split('\n');
+        const mDate = document.getElementById('mDate').value;
+        const log = document.getElementById('log');
+        if(!mDate || !ids[0]) return alert("بيانات ناقصة");
+
+        const allTeams = await new Promise(r => {
+            db.transaction("teams").objectStore("teams").getAll().onsuccess = e => r(e.target.result);
+        });
+
+        for (let id of ids) {
+            try {
+                const res = await fetch(`https://api.pubg.com/shards/steam/matches/${id.trim()}`, {
+                    headers: { "Authorization": `Bearer ${API_KEY}`, "Accept": "application/vnd.api+json" }
+                });
+                const data = await res.json();
+                const participants = data.included.filter(i => i.type === "participant");
+                const rosters = data.included.filter(i => i.type === "roster");
+
+                for (let team of allTeams) {
+                    const foundP = participants.find(p => team.roster.some(r => r.toLowerCase() === p.attributes.stats.name.toLowerCase()));
+                    if(foundP) {
+                        const myRoster = rosters.find(r => r.relationships.participants.data.some(p => p.id === foundP.id));
+                        const squadIds = myRoster.relationships.participants.data.map(p => p.id);
+                        const fullSquad = participants.filter(p => squadIds.includes(p.id));
+
+                        if(!team.history.find(h => h.matchId === id)) {
+                            team.history.push({
+                                date: mDate, matchId: id, rank: myRoster.attributes.stats.rank,
+                                kills: fullSquad.reduce((s, p) => s + p.attributes.stats.kills, 0),
+                                squad: fullSquad.map(p => ({ name: p.attributes.stats.name, isCore: team.roster.some(r => r.toLowerCase() === p.attributes.stats.name.toLowerCase()) }))
+                            });
+                            await new Promise(r => {
+                                const tx = db.transaction("teams", "readwrite");
+                                tx.objectStore("teams").put(team).onsuccess = () => r();
+                            });
+                            log.innerHTML += `\n✅ تم تحليل: ${team.name}`;
+                        }
+                    }
+                }
+            } catch (e) { log.innerHTML += `\n❌ خطأ: ${id}`; }
+        }
+    }
+
+    function renderStatsSummary() {
+        const tbody = document.getElementById('statsSummaryBody'); tbody.innerHTML = "";
+        db.transaction("teams").objectStore("teams").openCursor().onsuccess = e => {
+            const cursor = e.target.result;
+            if(cursor) {
+                tbody.innerHTML += `<tr><td>${cursor.value.name}</td><td>${cursor.value.history.length}</td><td><button onclick="viewPerf(${cursor.value.id})">عرض</button></td></tr>`;
+                cursor.continue();
+            }
+        };
+    }
+
+    function filterTeams() {
+        const q = document.getElementById('teamSearch').value.toLowerCase();
+        document.querySelectorAll('#statsSummaryBody tr').forEach(r => r.style.display = r.cells[0].innerText.toLowerCase().includes(q) ? "" : "none");
+    }
+
+    function viewPerf(id) {
+        db.transaction("teams").objectStore("teams").get(id).onsuccess = e => {
+            const t = e.target.result;
+            document.getElementById('performance-card').style.display = "block";
+            document.getElementById('perfTitle').innerText = `سكواد: ${t.name}`;
+            document.getElementById('detailsBody').innerHTML = t.history.map(h => `
+                <tr><td>${h.date}</td><td>#${h.rank}</td><td>${h.kills}</td><td>${h.squad.map(p => `<span class="player-tag ${p.isCore ? '' : 'standin'}">${p.name}</span>`).join('')}</td></tr>
+            `).join('');
+        };
+    }
+
+    function askAI() {
+        const input = document.getElementById('aiInput');
+        const box = document.getElementById('chatBox');
+        box.innerHTML += `<div class="msg user">${input.value}</div>`;
+        setTimeout(() => {
+            box.innerHTML += `<div class="msg ai">أنا هنا ومتابعك! المشروع دلوقت جاهز للرفع. بمجرد ما نرفعه، هقدر أربط لك ذكاء Gemini الحقيقي بالداتا دي.</div>`;
+            box.scrollTop = box.scrollHeight;
+        }, 600);
+        input.value = "";
+    }
+</script>
+</body>
+</html>
